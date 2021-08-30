@@ -1,1 +1,1 @@
-# Web Scraping module
+# Dedicated Web Scraping Repository
