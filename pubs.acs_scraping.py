@@ -12,6 +12,22 @@ orlando.villegas@univ-pau.fr
 
 import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+import geckodriver_autoinstaller
+
+geckodriver_autoinstaller.install()  # Check if the current version of geckodriver exists
+                                     # and if it doesn't exist, download it automatically,
+                                     # then add geckodriver to path
+
+
+options = webdriver.FirefoxOptions()
+
+# options.add_argument('--headless')
+options.add_argument('--private-window')
+
+
+driver = webdriver.Firefox(options=options)
+
 
 # Journal Energy & Fuels ACS
 
@@ -19,7 +35,13 @@ url_home = 'https://pubs.acs.org'
 
 url = f'{url_home}/loi/enfuem/'
 
+driver.get(url)
+# driver.close()
+
+exit()
+
 pag = requests.get(url)
+
 
 print('Status Code:')
 print(pag.status_code)
@@ -38,6 +60,13 @@ s = BeautifulSoup(pag.text, 'lxml')
 
 Issues = s.find('ul', attrs={'class': 'rlist issue-items pane-sections row__equalize-children-height'}).find_all('li')
 
+decade = s.find('ul', attrs={'class': 'rlist loi__list tab__nav swipe__list'}).find_all('li')
+print([i.text for i in decade])
+
+years = s.find('div', attrs={'class': 'tab__content'}).find_all('li')
+print([i.text for i in years])
+
+exit()
 # issue = Issues[0]
 
 # print(issue.find('a').get('href'))
@@ -68,39 +97,62 @@ articles_links = [article.get('href') for article in featured_articles]
 
 # print(articles_links[0])
 
-article_link = url_home + articles_links[0]
+# article_link = url_home + articles_links[0]
 
-article_page = requests.get(article_link)
+# article_page = requests.get(article_link)
 
-print('Status Code Article')
-print(article_page.status_code)
-print(article_page.request.url)
+# print('Status Code Article')
+# print(article_page.status_code)
+# print(article_page.request.url)
 
-s_article_page = BeautifulSoup(article_page.text, 'lxml')
+# s_article_page = BeautifulSoup(article_page.text, 'lxml')
 # print(s_article_page.prettify())
 
-title = s_article_page.find('h1').find('span').text
 
-print('Title')
-print(title)
+def get_article_info(soup):
+    title = soup.find('h1').find('span').text
+    article_authors = soup.find('ul', attrs={'class': 'loa'}).find_all('li')
+    authors = [author.find('span', attrs={'class': 'hlFld-ContribAuthor'}).text for author in article_authors]
 
-article_authors = s_article_page.find('ul', attrs={'class': 'loa'}).find_all('li')
+    cite = soup.find('div', attrs={'class': 'article_header-cite-this'})
 
-authors = [author.find('span', attrs={'class': 'hlFld-ContribAuthor'}).text for author in article_authors]
-print('Authors')
-print(authors)
+    abstract_page = soup.find('div', attrs={'class': 'article_content-left'}).find_all('p')
+    abstract = ' '.join([p.text for p in abstract_page])
 
-article_ref = s_article_page.find('div', attrs={'class': 'article_header-cite-this'})
-print(article_ref.text)
+    article_subjects = soup.find('div', attrs={'class': 'article_header-taxonomy'})
 
-abstract_page = s_article_page.find('div', attrs={'class': 'article_content-left'}).find_all('p')
-abstract = ' '.join([p.text for p in abstract_page])
+    print('Title:')
+    print(title)
 
-print(abstract)
+    print('Authors:')
+    print(', '.join(authors))
 
-article_subjects = s_article_page.find('div', attrs={'class': 'article_header-taxonomy'})
-# print(article_subjects)
+    # print('Abstract:', end='\n---------\n')
+    # print(abstract)
 
-if article_subjects is not None:
-    for sub in article_subjects.find_all('a'):
-        print(sub.get('title'))
+    # print(article_subjects)
+
+    # if article_subjects is not None:
+    #     print('Subjects:', end='\n---------\n')
+    #     for sub in article_subjects.find_all('a'):
+    #         print(sub.get('title'))
+
+    print('Cite:')
+    print(cite.text)
+
+
+def read_all_articles(home, links):
+    for article in links:
+        article_link = home + article
+
+        try:
+            article_page = requests.get(article_link)
+            if article_page.status_code == 200:
+                s_article_page = BeautifulSoup(article_page.text, 'lxml')
+
+                get_article_info(s_article_page)
+
+        except Exception as e:
+            print('Error:')
+            print(e)
+            print('\n')
