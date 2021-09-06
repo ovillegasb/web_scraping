@@ -36,6 +36,31 @@ url_home = 'https://pubs.acs.org'
 url = f'{url_home}/loi/enfuem/'
 
 driver.get(url)
+
+# decade = driver.find_elements_by_xpath('//a[@class="tab__nav__item__link"]')
+decade = driver.find_elements_by_xpath('//div[@class="loi tab loi-tab-1"]/div[@class="swipe__wrapper loi-list__wrapper"]/div[@class="scroll"]/ul/li/a')
+years = driver.find_elements_by_xpath('//div[@class="loi tab loi-tab-2"]/div/div/ul/li/a')
+
+# decade = content.find_elements_by_xpath('.//a[@class="tab__nav__item__link"]')
+print(len(decade))
+
+for d in decade:
+    print(d.get_attribute('title'))
+    print(d.get_attribute('href'))
+
+
+print(len(years))
+for y in years:
+    print(y.get_attribute('title'))
+    print(y.get_attribute('href'))
+
+
+decade[0].click()
+decade[1].click()
+decade[2].click()
+decade[3].click()
+decade[4].click()
+
 # driver.close()
 
 exit()
