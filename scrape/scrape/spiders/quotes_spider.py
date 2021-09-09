@@ -4,6 +4,7 @@ import scrapy
 # Title = //h1/a/text()
 # Cite = //span[@class="text" and @itemprop="text"]/text()
 # Top ten tags = //div[contains(@class, "tags-box")]/span[@class="tag-item"]/a/text()
+# Next page button = //ul[@class="pager"]/li[@class="next"]/a/@href
 
 
 class QuotesSpider(scrapy.Spider):
@@ -12,36 +13,59 @@ class QuotesSpider(scrapy.Spider):
     name = 'quotes'
 
     start_urls = [
-        'http://quotes.toscrape.com/'
+        'http://quotes.toscrape.com/page/1'
     ]
 
+    custom_settings = {
+        'FEED_URI': 'quotes.json',
+        'FEED_FORMAT': 'json'
+    }
+
+    def parse_only_quotes(self, response, **kwargs):
+        if kwargs:
+            quotes = kwargs['quotes']
+
+        quotes.extend(response.xpath(
+            '//span[@class="text" and @itemprop="text"]/text()'
+        ).getall())
+
+        next_page_button_link = response.xpath(
+            '//ul[@class="pager"]/li[@class="next"]/a/@href'
+        ).get()
+
+        if next_page_button_link:
+            yield response.follow(
+                next_page_button_link,
+                callback=self.parse_only_quotes,
+                cb_kwargs={'quotes': quotes}
+            )
+        else:
+            yield {
+                'quotes': quotes
+            }
+
     def parse(self, response):
-        print('*' * 10)
-        print('\n\n')
-        # print(response.status, response.headers)
-
         title = response.xpath('//h1/a/text()').get()
-        print(f'Title: {title}')
+        quotes = response.xpath(
+            '//span[@class="text" and @itemprop="text"]/text()'
+        ).getall()
 
-        print('\n\n')
+        top_ten_tags = response.xpath(
+            '//div[contains(@class, "tags-box")]/span[@class="tag-item"]/a/text()'
+        ).getall()
 
-        quotes = response.xpath('//span[@class="text" and @itemprop="text"]/text()').getall()
+        yield {
+            'title': title,
+            'top_ten_tags': top_ten_tags
+        }
 
-        print('Cites: ')
-        for quote in quotes:
-            print(f'- {quote}')
+        next_page_button_link = response.xpath(
+            '//ul[@class="pager"]/li[@class="next"]/a/@href'
+        ).get()
 
-        print('\n\n')
-
-        top_ten_tags = response.xpath('//div[contains(@class, "tags-box")]/span[@class="tag-item"]/a/text()').getall()
-
-        print('Top ten tags: ')
-        for tag in top_ten_tags:
-            print(f'- {tag}')
-
-        print('\n\n')
-        print('\n\n')
-
-        print('*' * 10)
-        #with open('results.html', 'w', encoding='utf-8') as f:
-        #    f.write(response.text)
+        if next_page_button_link:
+            yield response.follow(
+                next_page_button_link,
+                callback=self.parse_only_quotes,
+                cb_kwargs={'quotes': quotes}
+            )
