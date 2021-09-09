@@ -1,18 +1,26 @@
 let = $accordion = document.getElementById("accordion");
 
-let ciaData = null;
+//let articles_Data = null;
 
-fetch(
-  //"https://app.scrapinghub.com/api/v2/datasets/kdybI1E79Ww/download?format=json"
-  "./acs.json"
-)
+//fetch('./articles.json')
+//  .then(function (response) {
+//    return response.json();
+//  })
+//  .then(function (data) {
+//    appendData(data);
+//  })
+//  .catch(function (err) {
+//    console.log(err)
+//  })
+//"https://app.scrapinghub.com/api/v2/datasets/kdybI1E79Ww/download?format=json"
+fetch('./articles.json')
   .then((response) => {
     return response.json();
   })
   .then((data) => {
     // Work with JSON data here
-    ciaData = data;
-    cards = ciaData.map(
+    articles_Data = data;
+    cards = articles_Data.map(
       (x, idx) => `
     <div class="card">
     <div class="card-header bg-dark" id="heading${idx}">
@@ -51,5 +59,5 @@ fetch(
     }
   })
   .catch((err) => {
-    // Do something for an error here
+    // console.log('Do something for an error here')
   });

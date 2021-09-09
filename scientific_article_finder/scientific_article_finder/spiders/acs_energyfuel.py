@@ -13,8 +13,8 @@ xpaths = {
     'issue': '//ul[contains(@class, "rlist")]/li/div/a/@href',
     'articles': '//h5/a/@href',
     'title': '//h1/span/text()',
-    'authors': '//ul[@class="loa"]/li/span/span/text()',
-    'cite': '//div[@class="article_header-cite-this"]/span/text()',
+    'authors': ('//span[@class="hlFld-ContribAuthor"]/*/text() | //ul[@class="loa"]/li/span/span/text()'),
+    'cite': '(//div[@class="article_header-cite-this"]/span/text() | //div[@class="article_header-epubdate"]/span/text())',
     'abstract': '//div[@id="abstractBox"]/p/text()',
     'doi': '//div[@class="article_header-doiurl"]/a/@href'
 }
@@ -31,9 +31,14 @@ class SpiderEnfuel(scrapy.Spider):
     ]
 
     custom_settings = {
-        'FEED_URI': 'acs.json',
-        'FEED_FORMAT': 'json',
-        'FEED_EXPORT_ENCODING': 'utf-8',
+        'FEEDS': {
+            'articles.json': {
+                'format': 'json',
+                'encoding': 'utf8',
+                'store_empty': False,
+                'indent': 0,
+            }
+        },
         'ROBOTSTXT_OBEY': True
     }
 
@@ -66,9 +71,19 @@ class SpiderEnfuel(scrapy.Spider):
         link = kwargs['url']
         title = response.xpath(xpaths['title']).get()
         abstract = response.xpath(xpaths['abstract']).getall()
+        authors = response.xpath(xpaths['authors']).getall()
+        cite = response.xpath(xpaths['cite']).getall()
+
+        date = cite[-1]
+
+        # cleanning
+        abstract = ' '.join(abstract)
+        authors = '; '.join(authors)
 
         yield {
-            'url': link,
             'title': title,
-            'abstract': abstract
+            'authors': authors,
+            'date': date,
+            'abstract': abstract,
+            'url': link
         }
